@@ -113,7 +113,7 @@ else if navigator.webkitGetUserMedia
 else
 	console.log "Browser does not appear to be WebRTC-capable"
 
-module.exports = 
+window.exports = 
 	{ RTCPeerConnection
 	, RTCSessionDescription
 	, RTCIceCandidate

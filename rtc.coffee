@@ -30,7 +30,7 @@ class RTC extends Spine.Module
 
 	# Set some object attributes dependeing on browser.
 	browserSupport: () =>
-		@[k] = v for k, v of require("adapter")
+		@[k] = v for k, v of window.RTC
 
 	start: () =>
 		console.log "PeerConnection starting"
