@@ -1,8 +1,10 @@
 # https://code.google.com/p/webrtc/source/browse/stable/samples/js/base/adapter.js
-
 RTCPeerConnection     = null
+RTCSessionDescription = null
+RTCIceCandidate       = null
 getUserMedia          = null
 attachMediaStream     = null
+createIceServer       = null
 reattachMediaStream   = null
 webrtcDetectedBrowser = null
 webrtcDetectedVersion = null
@@ -72,7 +74,7 @@ else if navigator.webkitGetUserMedia
 	console.log "This appears to be Chrome"
 	webrtcDetectedBrowser = "chrome"
 	webrtcDetectedVersion = parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2], 10)
-	
+
 	# Creates iceServer from the url for Chrome.
 	createIceServer = (url, username, password) ->
 		iceServer = null
@@ -92,10 +94,14 @@ else if navigator.webkitGetUserMedia
 
 	
 	# The RTCPeerConnection object.
-	RTCPeerConnection = webkitRTCPeerConnection
+	RTCPeerConnection     = webkitRTCPeerConnection
+	# The RTCSessionDescription object.
+	RTCSessionDescription = window.RTCSessionDescription
+	# The RTCIceCandidate object.
+	RTCIceCandidate       = window.RTCIceCandidate
 	# Get UserMedia (only difference is the prefix).
 	# Code from Adam Barth.
-	getUserMedia      = navigator.webkitGetUserMedia.bind(navigator)
+	getUserMedia          = navigator.webkitGetUserMedia.bind(navigator)
 	
 	# Attach a media stream to an element.
 	attachMediaStream = (element, stream) ->
@@ -113,9 +119,11 @@ else if navigator.webkitGetUserMedia
 else
 	console.log "Browser does not appear to be WebRTC-capable"
 
-window.exports = 
+window.RTCAdapter = 
 	{ RTCPeerConnection
 	, RTCSessionDescription
 	, RTCIceCandidate
 	, getUserMedia
+	, attachMediaStream
+	, createIceServer
 	}

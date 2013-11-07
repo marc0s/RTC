@@ -13,31 +13,31 @@ class RTC extends Spine.Module
 		console.log "[INFO] RTC constructor"
 		@[key] = value for key,value of args
 		if @mediaElements?
-			@$dom1 = @mediaElements.localMedia
-			@$dom2 = @mediaElements.remoteMedia
+			@$dom1           = @mediaElements.localMedia
+			@$dom2           = @mediaElements.remoteMedia
 			@$dom1[0].volume = 0
 		else
 			@$dom1 = @$dom2 = null
 
 
 		@mediaConstraints ?= {audio: true, video: true}
-		@browserSupport()
-		@iceServers = []
-		@iceServers.push @stunServer if @stunServer?
-		@iceServers.push @turnServer if @turnServer?
-		@isVideoActive = true
-		@isAudioActive = true
-
-	# Set some object attributes dependeing on browser.
-	browserSupport: () =>
-		@[k] = v for k, v of window.RTC
+		@isVideoActive     = true
+		@isAudioActive     = true
+		@iceServers        = []
+		# @iceServers.push @stunServer if @stunServer?
+		# @iceServers.push @turnServer if @turnServer?
+		
 
 	start: () =>
 		console.log "PeerConnection starting"
 		# Firefox does not provide *onicecandidate* callback.
-		@noMoreCandidates = @browser is "firefox"
+		@noMoreCandidates = navigator.mozGetUserMedia?
 		@dtmfSender       = null
 		@createPeerConnection()
+
+	# Adds a new ICE (TURN or STUN) server.
+	addIceServer: (url, username, password) =>
+		@iceServers.push RTCAdapter.createIceServer url, username, password
 
 	createPeerConnection: =>
 		console.log "[INFO] createPeerConnection"
@@ -45,7 +45,7 @@ class RTC extends Spine.Module
 		# If the server is not reacheable by browser, peerconnection can only get host candidates.
 		console.log "[MEDIA] ICE servers"
 		console.log @iceServers
-		@pc = new @RTCPeerConnection "iceServers": @iceServers
+		@pc = new RTCAdapter.RTCPeerConnection "iceServers": @iceServers
 		
 		# When we receive remote media (RTP from the other peer), attach it to the DOM element.
 		@pc.onaddstream = (event) =>
@@ -86,11 +86,10 @@ class RTC extends Spine.Module
 				@triggerSDP() if @pc.localDescription?
 					
 		# PeerConnections events just to log them (only chrome).
-		if @browser is "chrome"
-			@pc.onicechange   = (event) => console.log "[INFO] icestate changed -> #{@pc.iceState}"
-			@pc.onstatechange = (event) => console.log "[INFO] peerconnectionstate changed -> #{@pc.readyState}"
-			@pc.onopen        = -> console.log "[MEDIA] peerconnection opened"
-			@pc.onclose       = -> console.log "[INFO] peerconnection closed"
+		@pc.onicechange   = (event) => console.log "[INFO] icestate changed -> #{@pc.iceState}"
+		@pc.onstatechange = (event) => console.log "[INFO] peerconnectionstate changed -> #{@pc.readyState}"
+		@pc.onopen        = -> console.log "[MEDIA] peerconnection opened"
+		@pc.onclose       = -> console.log "[INFO] peerconnection closed"
 		@createStream()
 
 	# This function creates or gets previous media, add it to
@@ -104,8 +103,7 @@ class RTC extends Spine.Module
 			@attachStream @$dom1, @localstream
 		# If there is not previous localstream, get it, add it to current PeerConnection object.
 		else
-			gumSuccess = (stream) =>
-				@localstream = stream
+			gumSuccess = (@localstream) =>
 				console.log "[INFO] getUserMedia successed"
 				@pc.addStream @localstream
 				@attachStream @$dom1, @localstream
@@ -113,14 +111,14 @@ class RTC extends Spine.Module
 				# to show a popup telling "Media got".
 				@trigger "localstream", @localstream
 				console.log "localstream", @localstream
-				[@isVideoActive, @isAudioActive] = [stream.getVideoTracks().length > 0, stream.getAudioTracks().length > 0]
+				[@isVideoActive, @isAudioActive] = [@localstream.getVideoTracks().length > 0, @localstream.getAudioTracks().length > 0]
 			gumFail = (error) =>
 				console.error error
 				console.error "GetUserMedia error"
 				@trigger "error", "getUserMedia"
 			# Ask to access hardware.
 			# gumSuccess and gumFail are callbacks that will be executed under getUserMedia success and failure executions.
-			@getUserMedia @mediaConstraints, gumSuccess, gumFail	
+			RTCAdapter.getUserMedia @mediaConstraints, gumSuccess, gumFail	
 
 	# Gets localDescription and trigger it in the "sdp" event.
 	triggerSDP: () =>
@@ -165,7 +163,7 @@ class RTC extends Spine.Module
 			console.log @pc.remoteDescription	
 			callback?()
 
-		description = new @RTCSessionDescription type: type, sdp: sdp
+		description = new RTCAdapter.RTCSessionDescription type: type, sdp: sdp
 		@pc.setRemoteDescription description, success, => @trigger "error", "setRemoteDescription", description
 
 	# Receive SDP offer.
@@ -246,5 +244,8 @@ class RTC extends Spine.Module
 	insertDTMF: (tone) =>
 		# if @dtmfSender?
 		# 	@dtmfSender.insertDTMF tone, 500, 50
+
+	attachStream: ($d, stream) ->
+		RTCAdapter.attachMediaStream $d[0], stream
 
 window.RTC = RTC
