@@ -1,4 +1,5 @@
 # https://code.google.com/p/webrtc/source/browse/stable/samples/js/base/adapter.js
+
 RTCPeerConnection     = null
 RTCSessionDescription = null
 RTCIceCandidate       = null

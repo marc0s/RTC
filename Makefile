@@ -1,2 +1,4 @@
 rtc.js: adapter.coffee rtc.coffee
-	coffee -p <(cat adapter.coffee rtc.coffee) > rtc.js
+	cat adapter.coffee rtc.coffee > tmp.coffee
+	coffee -p tmp.coffee > rtc.js
+	rm tmp.coffee

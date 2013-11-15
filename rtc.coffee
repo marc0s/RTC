@@ -26,7 +26,8 @@ class RTC extends Spine.Module
 		@iceServers        = []
 		# @iceServers.push @stunServer if @stunServer?
 		# @iceServers.push @turnServer if @turnServer?
-		
+	
+	pcOptions: {optional: [ {DtlsSrtpKeyAgreement: true}, {RtpDataChannels: true}]}
 
 	start: () =>
 		console.log "PeerConnection starting"
@@ -45,7 +46,7 @@ class RTC extends Spine.Module
 		# If the server is not reacheable by browser, peerconnection can only get host candidates.
 		console.log "[MEDIA] ICE servers"
 		console.log @iceServers
-		@pc = new RTCAdapter.RTCPeerConnection "iceServers": @iceServers
+		@pc = new RTCAdapter.RTCPeerConnection "iceServers": @iceServers, @pcOptions
 		
 		# When we receive remote media (RTP from the other peer), attach it to the DOM element.
 		@pc.onaddstream = (event) =>
@@ -73,10 +74,10 @@ class RTC extends Spine.Module
 			if evt.candidate
 				console.log "[INFO] New ICE candidate:"
 				candidate =
-					type: 'candidate'
-					label: evt.candidate.sdpMLineIndex
-					id: evt.candidate.sdpMid
-					candidate: evt.candidate.candidate
+					type      : 'candidate'
+					label     : evt.candidate.sdpMLineIndex
+					id        : evt.candidate.sdpMid
+					candidate : evt.candidate.candidate
 				console.log "#{candidate.candidate}"
 			else
 				console.log "[INFO] No more ice candidates"
@@ -86,8 +87,8 @@ class RTC extends Spine.Module
 				@triggerSDP() if @pc.localDescription?
 					
 		# PeerConnections events just to log them (only chrome).
-		@pc.onicechange   = (event) => console.log "[INFO] icestate changed -> #{@pc.iceState}"
-		@pc.onstatechange = (event) => console.log "[INFO] peerconnectionstate changed -> #{@pc.readyState}"
+		@pc.onicechange   = => console.log "[INFO] icestate changed -> #{@pc.iceState}"
+		@pc.onstatechange = => console.log "[INFO] peerconnectionstate changed -> #{@pc.readyState}"
 		@pc.onopen        = -> console.log "[MEDIA] peerconnection opened"
 		@pc.onclose       = -> console.log "[INFO] peerconnection closed"
 		@createStream()
