@@ -19,7 +19,6 @@ class RTC extends Spine.Module
 		else
 			@$dom1 = @$dom2 = null
 
-
 		@mediaConstraints ?= {audio: true, video: true}
 		@isVideoActive     = true
 		@isAudioActive     = true
@@ -51,17 +50,17 @@ class RTC extends Spine.Module
 		# When we receive remote media (RTP from the other peer), attach it to the DOM element.
 		@pc.onaddstream = (event) =>
 			console.log "[MEDIA] Stream added"
-			@remotestream = event.stream
+			remotestream = event.stream
 			
 			# Temporarily removed cause a Chrome 30 issue. !!!
-			# @dtmfSender   = @pc.createDTMFSender(@localstream.getAudioTracks()[0])
-			# @dtmfSender.ontonechange = (dtmf) -> 
-			# 	console.log dtmf
-			# 	console.log "[INFO] DTMF send - #{dtmf.tone}"
-			# window.test = @insertDTMF
+			@dtmfSender   = @pc.createDTMFSender(@localstream.getAudioTracks()[0])
+			@dtmfSender.ontonechange = (dtmf) -> 
+				console.log dtmf
+				console.log "[INFO] DTMF send - #{dtmf.tone}"
+			window.test = @insertDTMF
 
-			@attachStream @$dom2, @remotestream 
-			@trigger "remotestream", @remotestream
+			# @attachStream @$dom2, remotestream 
+			@trigger "remotestream", remotestream
 
 
 		# When a new ice candidate is received and it's not null, we'll show it in the console.
@@ -101,13 +100,12 @@ class RTC extends Spine.Module
 		if @localstream?
 			console.log "[INFO] Using media previously got."
 			@pc.addStream @localstream
-			@attachStream @$dom1, @localstream
+			# @attachStream @$dom1, @localstream
 		# If there is not previous localstream, get it, add it to current PeerConnection object.
 		else
 			gumSuccess = (@localstream) =>
 				console.log "[INFO] getUserMedia successed"
 				@pc.addStream @localstream
-				@attachStream @$dom1, @localstream
 				# We trigger an event to be able to bind any behaviour when we get media; for example,
 				# to show a popup telling "Media got".
 				@trigger "localstream", @localstream
@@ -243,10 +241,12 @@ class RTC extends Spine.Module
 		video: Boolean(@isVideoActive), audio: Boolean(@isAudioActive)
 
 	insertDTMF: (tone) =>
-		# if @dtmfSender?
-		# 	@dtmfSender.insertDTMF tone, 500, 50
+		if @dtmfSender?
+			@dtmfSender.insertDTMF tone, 500, 50
 
 	attachStream: ($d, stream) ->
+		console.log $d
+		console.log $d[0]
 		RTCAdapter.attachMediaStream $d[0], stream
 
 window.RTC = RTC
