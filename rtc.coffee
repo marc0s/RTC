@@ -52,14 +52,14 @@ class RTC extends Spine.Module
 			console.log "[MEDIA] Stream added"
 			remotestream = event.stream
 			
-			# Temporarily removed cause a Chrome 30 issue. !!!
-			@dtmfSender   = @pc.createDTMFSender(@localstream.getAudioTracks()[0])
-			@dtmfSender.ontonechange = (dtmf) -> 
-				console.log dtmf
-				console.log "[INFO] DTMF send - #{dtmf.tone}"
-			window.test = @insertDTMF
+			# DTMFs onoly works on Chrome
+			if RTCAdapter.webrtcDetectedBrowser is "chrome"
+				@dtmfSender   = @pc.createDTMFSender(@localstream.getAudioTracks()[0])
+				@dtmfSender.ontonechange = (dtmf) -> 
+					console.log dtmf
+					console.log "[INFO] DTMF send - #{dtmf.tone}"
+				window.test = @insertDTMF
 
-			# @attachStream @$dom2, remotestream 
 			@trigger "remotestream", remotestream
 
 
@@ -108,8 +108,8 @@ class RTC extends Spine.Module
 				@pc.addStream @localstream
 				# We trigger an event to be able to bind any behaviour when we get media; for example,
 				# to show a popup telling "Media got".
-				@trigger "localstream", @localstream
-				console.log "localstream", @localstream
+				@trigger "localstream"    , @localstream
+				console.log "localstream" , @localstream
 				[@isVideoActive, @isAudioActive] = [@localstream.getVideoTracks().length > 0, @localstream.getAudioTracks().length > 0]
 			gumFail = (error) =>
 				console.error error
@@ -180,7 +180,6 @@ class RTC extends Spine.Module
 	# Close PeerConnection and reset it with *start*.
 	close: () =>
 		# Hide remote video.
-		# @$dom2.addClass "hidden" if @$dom2
 		# Closing PeerConnection fails if the PeerConnection is not opened.
 		try
 			@pc.close()
@@ -225,7 +224,6 @@ class RTC extends Spine.Module
 		@isVideoActive     = true
 
 	toggleMuteVideo: () =>
-		# Call the getVideoTracks method via "adapter.js".
 		videoTracks = @localstream.getVideoTracks()
 
 		if videoTracks.length is 0
@@ -241,9 +239,8 @@ class RTC extends Spine.Module
 		video: Boolean(@isVideoActive), audio: Boolean(@isAudioActive)
 
 	insertDTMF: (tone) =>
-		if @dtmfSender?
-			@dtmfSender.insertDTMF tone, 500, 50
-
+		@dtmfSender.insertDTMF tone, 500, 50 if @dtmfSender?
+			
 	attachStream: ($d, stream) ->
 		console.log $d
 		console.log $d[0]

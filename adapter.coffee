@@ -127,4 +127,6 @@ window.RTCAdapter =
 	, getUserMedia
 	, attachMediaStream
 	, createIceServer
+	, webrtcDetectedBrowser
+	, webrtcDetectedVersion
 	}
