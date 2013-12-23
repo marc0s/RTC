@@ -12,12 +12,6 @@ class RTC extends Spine.Module
 	constructor: (args) ->
 		console.log "[INFO] RTC constructor"
 		@[key] = value for key,value of args
-		if @mediaElements?
-			@$dom1           = @mediaElements.localMedia
-			@$dom2           = @mediaElements.remoteMedia
-			@$dom1[0].volume = 0
-		else
-			@$dom1 = @$dom2 = null
 
 		@mediaConstraints ?= {audio: true, video: true}
 		@isVideoActive     = true
@@ -100,7 +94,6 @@ class RTC extends Spine.Module
 		if @localstream?
 			console.log "[INFO] Using media previously got."
 			@pc.addStream @localstream
-			# @attachStream @$dom1, @localstream
 		# If there is not previous localstream, get it, add it to current PeerConnection object.
 		else
 			gumSuccess = (@localstream) =>
