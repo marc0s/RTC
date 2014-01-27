@@ -61,24 +61,33 @@ class RTC extends Spine.Module
 		# If we receive a null candidate, if means the candidate gathering process is finished;
 		# so we just have to wait for the SDP to be avaliable. If it's already avaliable, we
 		# trigger the SDP event.
-		@pc.onicecandidate = (evt, moreToFollow) =>
+
+		iceGatheringEndCb = =>
+			console.log "[INFO] No more ice candidates"
+			@noMoreCandidates = true
+			# If we don't expect more ice candidates and the local description is 
+			# set, send the sdp (fire the "sdp" event).
+			@triggerSDP() if @pc.localDescription?
+
+		@pc.onicecandidate = (evt) =>
 			console.log "[INFO] onicecandidate"
-			console.log @pc.iceState
 			if evt.candidate
 				console.log "[INFO] New ICE candidate:"
+				console.log "#{evt.candidate.candidate}"
 				candidate =
 					type      : 'candidate'
 					label     : evt.candidate.sdpMLineIndex
 					id        : evt.candidate.sdpMid
 					candidate : evt.candidate.candidate
-				console.log "#{candidate.candidate}"
+				
 			else
-				console.log "[INFO] No more ice candidates"
-				@noMoreCandidates = true
-				# If we don't expect more ice candidates and the local description is 
-				# set, send the sdp (fire the "sdp" event).
-				@triggerSDP() if @pc.localDescription?
-					
+				do iceGatheringEndCb
+
+		@pc.oniceconnectionstatechange = (evt) =>
+			if evt.currentTarget.iceGatheringState is 'complete' and @pc.iceConnectionState isnt 'closed'
+				console.log "[INFO] iceGatheringState -> #{evt.currentTarget.iceGatheringState}"
+				do iceGatheringEndCb
+						
 		# PeerConnections events just to log them (only chrome).
 		@pc.onicechange   = => console.log "[INFO] icestate changed -> #{@pc.iceState}"
 		@pc.onstatechange = => console.log "[INFO] peerconnectionstate changed -> #{@pc.readyState}"
